@@ -3,6 +3,8 @@ const Joi = require("joi");
 
 const { handleSaveErrors } = require("../helpers");
 
+const emailRegexp = /^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/i;
+
 const allowedSubscriptions = ["starter", "pro", "business"];
 
 const userSchema = new Schema({
@@ -20,10 +22,21 @@ const userSchema = new Schema({
     enum: ["starter", "pro", "business"],
     default: "starter",
   },
-  token: String,
+  token: {
+    type: String,
+    default: "",
+  },
   avatarURL: {
     type: String,
     required: true,
+  },
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    required: [true, "Verify token is required"],
   },
 });
 
@@ -31,11 +44,11 @@ userSchema.post("save", handleSaveErrors);
 
 const registerSchema = Joi.object({
   password: Joi.string().min(6).max(30).required(),
-  email: Joi.string().required(),
+  email: Joi.string().pattern(emailRegexp).required(),
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string().required(),
+  email: Joi.string().pattern(emailRegexp).required(),
   password: Joi.string().min(6).max(30).required(),
 });
 
@@ -45,10 +58,15 @@ const subscriptionSchema = Joi.object({
     .required(),
 });
 
+const verifyEmailSchema = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+});
+
 const schemas = {
   registerSchema,
   loginSchema,
   subscriptionSchema,
+  verifyEmailSchema,
 };
 
 const User = model("user", userSchema);
